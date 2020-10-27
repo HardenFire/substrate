@@ -459,7 +459,7 @@ decl_error! {
 
 decl_module! {
 	/// Contracts module.
-	pub struct Module<T: Trait> for enum Call where origin: <T as frame_system::Trait>::Origin {
+	pub struct Module<T: Trait> for enum Call where origin: <T as frame_system::Trait>::Origin, T::AccountId: UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 		type Error = Error<T>;
 
 		/// Number of block delay an extrinsic claim surcharge has.
