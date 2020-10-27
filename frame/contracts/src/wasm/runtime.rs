@@ -151,7 +151,7 @@ impl<'a, E: Ext + 'a> Runtime<'a, E> {
 pub(crate) fn to_execution_result<E: Ext>(
 	runtime: Runtime<E>,
 	sandbox_result: Result<sp_sandbox::ReturnValue, sp_sandbox::Error>,
-) -> ExecResult {
+) -> ExecResult where <E::T as Trait>::AccountId: sp_core::crypto::UncheckedFrom<<E::T as frame_system::Trait>::Hash>, <E::T as Trait>::AccountId: AsRef<[u8]> {
 	// If a trap reason is set we base our decision solely on that.
 	if let Some(trap_reason) = runtime.trap_reason {
 		return match trap_reason {
@@ -277,7 +277,7 @@ pub enum RuntimeToken {
 	HashBlake128(u32),
 }
 
-impl<T: Trait> Token<T> for RuntimeToken {
+impl<T: Trait> Token<T> for RuntimeToken where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	type Metadata = HostFnWeights;
 
 	fn calculate_amount(&self, s: &Self::Metadata) -> Gas {
@@ -340,6 +340,8 @@ fn charge_gas<E, Tok>(ctx: &mut Runtime<E>, token: Tok) -> Result<(), sp_sandbox
 where
 	E: Ext,
 	Tok: Token<E::T, Metadata=HostFnWeights>,
+	<E::T as Trait>::AccountId: sp_core::crypto::UncheckedFrom<<E::T as frame_system::Trait>::Hash>,
+	<E::T as Trait>::AccountId: AsRef<[u8]>
 {
 	match ctx.gas_meter.charge(&ctx.schedule.host_fn_weights, token) {
 		GasMeterResult::Proceed => Ok(()),
@@ -359,7 +361,7 @@ fn read_sandbox_memory<E: Ext>(
 	ctx: &mut Runtime<E>,
 	ptr: u32,
 	len: u32,
-) -> Result<Vec<u8>, sp_sandbox::HostError> {
+) -> Result<Vec<u8>, sp_sandbox::HostError> where <E::T as Trait>::AccountId: sp_core::crypto::UncheckedFrom<<E::T as frame_system::Trait>::Hash>, <E::T as Trait>::AccountId: AsRef<[u8]> {
 	let mut buf = vec![0u8; len as usize];
 	ctx.memory.get(ptr, buf.as_mut_slice())
 		.map_err(|_| store_err(ctx, Error::<E::T>::OutOfBounds))?;
@@ -375,7 +377,7 @@ fn read_sandbox_memory_into_buf<E: Ext>(
 	ctx: &mut Runtime<E>,
 	ptr: u32,
 	buf: &mut [u8],
-) -> Result<(), sp_sandbox::HostError> {
+) -> Result<(), sp_sandbox::HostError> where <E::T as Trait>::AccountId: sp_core::crypto::UncheckedFrom<<E::T as frame_system::Trait>::Hash>, <E::T as Trait>::AccountId: AsRef<[u8]> {
 	ctx.memory.get(ptr, buf).map_err(|_| store_err(ctx, Error::<E::T>::OutOfBounds))
 }
 
@@ -389,7 +391,7 @@ fn read_sandbox_memory_as<E: Ext, D: Decode>(
 	ctx: &mut Runtime<E>,
 	ptr: u32,
 	len: u32,
-) -> Result<D, sp_sandbox::HostError> {
+) -> Result<D, sp_sandbox::HostError> where <E::T as Trait>::AccountId: sp_core::crypto::UncheckedFrom<<E::T as frame_system::Trait>::Hash>, <E::T as Trait>::AccountId: AsRef<[u8]> {
 	let buf = read_sandbox_memory(ctx, ptr, len)?;
 	D::decode(&mut &buf[..]).map_err(|_| store_err(ctx, Error::<E::T>::DecodingFailed))
 }
@@ -403,7 +405,7 @@ fn write_sandbox_memory<E: Ext>(
 	ctx: &mut Runtime<E>,
 	ptr: u32,
 	buf: &[u8],
-) -> Result<(), sp_sandbox::HostError> {
+) -> Result<(), sp_sandbox::HostError> where <E::T as Trait>::AccountId: sp_core::crypto::UncheckedFrom<<E::T as Trait>::Hash>, <E::T as Trait>::AccountId: AsRef<[u8]> {
 	ctx.memory.set(ptr, buf).map_err(|_| store_err(ctx, Error::<E::T>::OutOfBounds))
 }
 
@@ -433,7 +435,7 @@ fn write_sandbox_output<E: Ext>(
 	buf: &[u8],
 	allow_skip: bool,
 	create_token: impl FnOnce(u32) -> Option<RuntimeToken>,
-) -> Result<(), sp_sandbox::HostError> {
+) -> Result<(), sp_sandbox::HostError> where <E::T as Trait>::AccountId: sp_core::crypto::UncheckedFrom<<E::T as Trait>::Hash>, <E::T as Trait>::AccountId: AsRef<[u8]> {
 	if allow_skip && out_ptr == u32::max_value() {
 		return Ok(());
 	}
@@ -478,7 +480,7 @@ fn store_err<E, Error>(ctx: &mut Runtime<E>, err: Error) -> sp_sandbox::HostErro
 }
 
 /// Fallible conversion of `DispatchError` to `ReturnCode`.
-fn err_into_return_code<T: Trait>(from: DispatchError) -> Result<ReturnCode, DispatchError> {
+fn err_into_return_code<T: Trait>(from: DispatchError) -> Result<ReturnCode, DispatchError> where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	use ReturnCode::*;
 
 	let below_sub = Error::<T>::BelowSubsistenceThreshold.into();
@@ -498,7 +500,7 @@ fn err_into_return_code<T: Trait>(from: DispatchError) -> Result<ReturnCode, Dis
 }
 
 /// Fallible conversion of a `ExecResult` to `ReturnCode`.
-fn exec_into_return_code<T: Trait>(from: ExecResult) -> Result<ReturnCode, DispatchError> {
+fn exec_into_return_code<T: Trait>(from: ExecResult) -> Result<ReturnCode, DispatchError> where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	use crate::exec::ErrorOrigin::Callee;
 
 	let ExecError { error, origin } = match from {
@@ -520,7 +522,7 @@ fn exec_into_return_code<T: Trait>(from: ExecResult) -> Result<ReturnCode, Dispa
 /// extracted for display in the UI.
 fn map_exec_result<E: Ext>(ctx: &mut Runtime<E>, result: ExecResult)
 	-> Result<ReturnCode, sp_sandbox::HostError>
-{
+where <E::T as Trait>::AccountId: sp_core::crypto::UncheckedFrom<<E::T as Trait>::Hash>, <E::T as Trait>::AccountId: AsRef<[u8]> {
 	match exec_into_return_code::<E::T>(result) {
 		Ok(code) => Ok(code),
 		Err(err) => Err(store_err(ctx, err)),
@@ -532,7 +534,7 @@ fn map_exec_result<E: Ext>(ctx: &mut Runtime<E>, result: ExecResult)
 /// Used to decide between fatal and non-fatal errors.
 fn map_dispatch_result<T, E: Ext>(ctx: &mut Runtime<E>, result: Result<T, DispatchError>)
 	-> Result<ReturnCode, sp_sandbox::HostError>
-{
+where <E::T as Trait>::AccountId: sp_core::crypto::UncheckedFrom<<E::T as Trait>::Hash>, <E::T as Trait>::AccountId: AsRef<[u8]> {
 	let err = if let Err(err) = result {
 		err
 	} else {

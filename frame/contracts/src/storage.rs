@@ -52,7 +52,7 @@ pub fn write_contract_storage<T: Trait>(
 	trie_id: &TrieId,
 	key: &StorageKey,
 	opt_new_value: Option<Vec<u8>>,
-) -> Result<(), ContractAbsentError> {
+) -> Result<(), ContractAbsentError> where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	let mut new_info = match <ContractInfoOf<T>>::get(account) {
 		Some(ContractInfo::Alive(alive)) => alive,
 		None | Some(ContractInfo::Tombstone(_)) => return Err(ContractAbsentError),
@@ -126,7 +126,7 @@ pub fn write_contract_storage<T: Trait>(
 /// Returns the rent allowance set for the contract give by the account id.
 pub fn rent_allowance<T: Trait>(
 	account: &AccountIdOf<T>,
-) -> Result<BalanceOf<T>, ContractAbsentError> {
+) -> Result<BalanceOf<T>, ContractAbsentError> where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	<ContractInfoOf<T>>::get(account)
 		.and_then(|i| i.as_alive().map(|i| i.rent_allowance))
 		.ok_or(ContractAbsentError)
@@ -138,7 +138,7 @@ pub fn rent_allowance<T: Trait>(
 pub fn set_rent_allowance<T: Trait>(
 	account: &AccountIdOf<T>,
 	rent_allowance: BalanceOf<T>,
-) -> Result<(), ContractAbsentError> {
+) -> Result<(), ContractAbsentError> where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	<ContractInfoOf<T>>::mutate(account, |maybe_contract_info| match maybe_contract_info {
 		Some(ContractInfo::Alive(ref mut alive_info)) => {
 			alive_info.rent_allowance = rent_allowance;
@@ -150,7 +150,7 @@ pub fn set_rent_allowance<T: Trait>(
 
 /// Returns the code hash of the contract specified by `account` ID.
 #[cfg(test)]
-pub fn code_hash<T: Trait>(account: &AccountIdOf<T>) -> Result<CodeHash<T>, ContractAbsentError> {
+pub fn code_hash<T: Trait>(account: &AccountIdOf<T>) -> Result<CodeHash<T>, ContractAbsentError> where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	<ContractInfoOf<T>>::get(account)
 		.and_then(|i| i.as_alive().map(|i| i.code_hash))
 		.ok_or(ContractAbsentError)
@@ -163,7 +163,7 @@ pub fn place_contract<T: Trait>(
 	account: &AccountIdOf<T>,
 	trie_id: TrieId,
 	ch: CodeHash<T>,
-) -> Result<(), &'static str> {
+) -> Result<(), &'static str> where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	<ContractInfoOf<T>>::mutate(account, |maybe_contract_info| {
 		if maybe_contract_info.is_some() {
 			return Err("Alive contract or tombstone already exists");
@@ -190,7 +190,7 @@ pub fn place_contract<T: Trait>(
 /// Removes the contract and all the storage associated with it.
 ///
 /// This function doesn't affect the account.
-pub fn destroy_contract<T: Trait>(address: &AccountIdOf<T>, trie_id: &TrieId) {
+pub fn destroy_contract<T: Trait>(address: &AccountIdOf<T>, trie_id: &TrieId) where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	<ContractInfoOf<T>>::remove(address);
 	child::kill_storage(&crate::child_trie_info(&trie_id));
 }

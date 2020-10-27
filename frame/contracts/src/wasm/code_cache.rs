@@ -39,7 +39,7 @@ use frame_support::StorageMap;
 pub fn save<T: Trait>(
 	original_code: Vec<u8>,
 	schedule: &Schedule<T>,
-) -> Result<CodeHash<T>, &'static str> {
+) -> Result<CodeHash<T>, &'static str> where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	let prefab_module = prepare::prepare_contract::<Env, T>(&original_code, schedule)?;
 	let code_hash = T::Hashing::hash(&original_code);
 
@@ -57,7 +57,7 @@ pub fn save<T: Trait>(
 pub fn save_raw<T: Trait>(
 	original_code: Vec<u8>,
 	schedule: &Schedule<T>,
-) -> Result<CodeHash<T>, &'static str> {
+) -> Result<CodeHash<T>, &'static str> where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	let prefab_module = prepare::benchmarking::prepare_contract::<T>(&original_code, schedule)?;
 	let code_hash = T::Hashing::hash(&original_code);
 
@@ -75,7 +75,7 @@ pub fn save_raw<T: Trait>(
 pub fn load<T: Trait>(
 	code_hash: &CodeHash<T>,
 	schedule: &Schedule<T>,
-) -> Result<PrefabWasmModule, &'static str> {
+) -> Result<PrefabWasmModule, &'static str> where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	let mut prefab_module =
 		<CodeStorage<T>>::get(code_hash).ok_or_else(|| "code is not found")?;
 

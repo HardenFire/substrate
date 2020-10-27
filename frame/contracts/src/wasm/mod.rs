@@ -70,13 +70,13 @@ pub struct WasmLoader<'a, T: Trait> {
 	schedule: &'a Schedule<T>,
 }
 
-impl<'a, T: Trait> WasmLoader<'a, T> {
+impl<'a, T: Trait> WasmLoader<'a, T> where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	pub fn new(schedule: &'a Schedule<T>) -> Self {
 		WasmLoader { schedule }
 	}
 }
 
-impl<'a, T: Trait> crate::exec::Loader<T> for WasmLoader<'a, T> {
+impl<'a, T: Trait> crate::exec::Loader<T> for WasmLoader<'a, T> where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	type Executable = WasmExecutable;
 
 	fn load_init(&self, code_hash: &CodeHash<T>) -> Result<WasmExecutable, &'static str> {
@@ -96,17 +96,17 @@ impl<'a, T: Trait> crate::exec::Loader<T> for WasmLoader<'a, T> {
 }
 
 /// Implementation of `Vm` that takes `WasmExecutable` and executes it.
-pub struct WasmVm<'a, T: Trait> {
+pub struct WasmVm<'a, T: Trait> where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	schedule: &'a Schedule<T>,
 }
 
-impl<'a, T: Trait> WasmVm<'a, T> {
+impl<'a, T: Trait> WasmVm<'a, T> where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	pub fn new(schedule: &'a Schedule<T>) -> Self {
 		WasmVm { schedule }
 	}
 }
 
-impl<'a, T: Trait> crate::exec::Vm<T> for WasmVm<'a, T> {
+impl<'a, T: Trait> crate::exec::Vm<T> for WasmVm<'a, T> where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	type Executable = WasmExecutable;
 
 	fn execute<E: Ext<T = T>>(

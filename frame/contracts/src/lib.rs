@@ -407,7 +407,7 @@ where
 
 decl_error! {
 	/// Error for the contracts module.
-	pub enum Error for Module<T: Trait> {
+	pub enum Error for Module<T: Trait> where T::AccountId: sp_core::crypto::UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 		/// A new schedule must have a greater version than the current one.
 		InvalidScheduleVersion,
 		/// An origin must be signed or inherent and auxiliary sender only provided on inherent.
@@ -626,7 +626,7 @@ decl_module! {
 }
 
 /// Public APIs provided by the contracts module.
-impl<T: Trait> Module<T> {
+impl<T: Trait> Module<T> where T::AccountId: UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	/// Perform a call to a specified contract.
 	///
 	/// This function is similar to `Self::call`, but doesn't perform any address lookups and better
@@ -678,7 +678,7 @@ impl<T: Trait> Module<T> {
 	}
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Trait> Module<T> where T::AccountId: UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 	fn execute_wasm(
 		origin: T::AccountId,
 		gas_meter: &mut GasMeter<T>,
@@ -736,7 +736,7 @@ decl_event! {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as Contracts {
+	trait Store for Module<T: Trait> as Contracts where T::AccountId: UncheckedFrom<T::Hash>, T::AccountId: AsRef<[u8]> {
 		/// Current cost schedule for contracts.
 		CurrentSchedule get(fn current_schedule) config(): Schedule<T> = Default::default();
 		/// A mapping from an original code hash to the original code, untouched by instrumentation.
